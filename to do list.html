@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comprehensive To-Do List</title>
+    <style>
+        /* Basic Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Body Styling */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+
+        /* Container Styling */
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+
+        /* Heading */
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        /* Input Field */
+        #new-task-input {
+            width: 80%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        /* Add Button */
+        #add-task-button {
+            padding: 10px 20px;
+            border: none;
+            background: #28a745;
+            color: #fff;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        #add-task-button:hover {
+            background: #218838;
+        }
+
+        /* Task List */
+        ul {
+            list-style: none;
+            margin-top: 20px;
+        }
+
+        li {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f9f9f9;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+
+        /* Task Text */
+        .task-text {
+            flex-grow: 1;
+            margin-left: 10px;
+            font-size: 16px;
+        }
+
+        /* Completed Task */
+        .completed .task-text {
+            text-decoration: line-through;
+            color: #888;
+        }
+
+        /* Action Buttons */
+        .actions button {
+            margin-left: 5px;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .actions .edit-button {
+            background: #ffc107;
+            color: #fff;
+        }
+
+        .actions .delete-button {
+            background: #dc3545;
+            color: #fff;
+        }
+
+        .actions .edit-button:hover {
+            background: #e0a800;
+        }
+
+        .actions .delete-button:hover {
+            background: #c82333;
+        }
+
+        /* Filters */
+        .filters {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filters button {
+            padding: 8px 16px;
+            border: none;
+            background: #007bff;
+            color: #fff;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px 0;
+            flex: 1;
+            margin-right: 5px;
+        }
+
+        .filters button:last-child {
+            margin-right: 0;
+        }
+
+        .filters button.active {
+            background: #0056b3;
+        }
+
+        .filters button:hover {
+            background: #0056b3;
+        }
+
+        /* Counters */
+        .counters {
+            margin-top: 10px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        .counters span {
+            font-size: 14px;
+            color: #555;
+        }
+
+        /* Clear Completed */
+        #clear-completed {
+            padding: 8px 16px;
+            border: none;
+            background: #6c757d;
+            color: #fff;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        #clear-completed:hover {
+            background: #5a6268;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            #new-task-input {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+
+            #add-task-button {
+                width: 100%;
+            }
+
+            .filters button {
+                flex: 100%;
+                margin-right: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>To-Do List</h1>
+        <!-- Input Section -->
+        <div>
+            <input type="text" id="new-task-input" placeholder="Add a new task...">
+            <button id="add-task-button">Add</button>
+        </div>
+
+        <!-- Task List -->
+        <ul id="task-list">
+            <!-- Tasks will be dynamically added here -->
+        </ul>
+
+        <!-- Filters -->
+        <div class="filters">
+            <button id="filter-all" class="active">All</button>
+            <button id="filter-active">Active</button>
+            <button id="filter-completed">Completed</button>
+        </div>
+
+        <!-- Counters -->
+        <div class="counters">
+            <span id="active-count">0 active</span>
+            <span id="completed-count">0 completed</span>
+        </div>
+
+        <!-- Clear Completed Button -->
+        <button id="clear-completed">Clear Completed</button>
+    </div>
+
+    <script>
+        // Selectors
+        const taskInput = document.getElementById('new-task-input');
+        const addTaskButton = document.getElementById('add-task-button');
+        const taskList = document.getElementById('task-list');
+        const filterAll = document.getElementById('filter-all');
+        const filterActive = document.getElementById('filter-active');
+        const filterCompleted = document.getElementById('filter-completed');
+        const activeCountSpan = document.getElementById('active-count');
+        const completedCountSpan = document.getElementById('completed-count');
+        const clearCompletedButton = document.getElementById('clear-completed');
+
+        // Task Array
+        let tasks = [];
+
+        // Current Filter ('all', 'active', 'completed')
+        let currentFilter = 'all';
+
+        // Load tasks from localStorage on page load
+        window.onload = function() {
+            if (localStorage.getItem('tasks')) {
+                tasks = JSON.parse(localStorage.getItem('tasks'));
+            }
+            renderTasks();
+        }
+
+        // Add Task Event
+        addTaskButton.addEventListener('click', addTask);
+        taskInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addTask();
+            }
+        });
+
+        // Add Task Function
+        function addTask() {
+            const taskText = taskInput.value.trim();
+            if (taskText === '') {
+                alert('Please enter a task.');
+                return;
+            }
+            const task = {
+                id: Date.now(),
+                text: taskText,
+                completed: false
+            };
+            tasks.push(task);
+            saveTasks();
+            renderTasks();
+            taskInput.value = '';
+        }
+
+        // Save Tasks to localStorage
+        function saveTasks() {
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+        }
+
+        // Render Tasks based on current filter
+        function renderTasks() {
+            // Clear existing tasks
+            taskList.innerHTML = '';
+
+            // Filter tasks
+            let filteredTasks = [];
+            if (currentFilter === 'all') {
+                filteredTasks = tasks;
+            } else if (currentFilter === 'active') {
+                filteredTasks = tasks.filter(task => !task.completed);
+            } else if (currentFilter === 'completed') {
+                filteredTasks = tasks.filter(task => task.completed);
+            }
+
+            // Create task elements
+            filteredTasks.forEach(task => {
+                const li = document.createElement('li');
+                if (task.completed) {
+                    li.classList.add('completed');
+                }
+
+                // Checkbox
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.checked = task.completed;
+                checkbox.addEventListener('change', () => toggleComplete(task.id));
+                li.appendChild(checkbox);
+
+                // Task Text
+                const span = document.createElement('span');
+                span.classList.add('task-text');
+                span.textContent = task.text;
+                li.appendChild(span);
+
+                // Action Buttons
+                const actionsDiv = document.createElement('div');
+                actionsDiv.classList.add('actions');
+
+                // Edit Button
+                const editButton = document.createElement('button');
+                editButton.textContent = 'Edit';
+                editButton.classList.add('edit-button');
+                editButton.addEventListener('click', () => editTask(task.id));
+                actionsDiv.appendChild(editButton);
+
+                // Delete Button
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Delete';
+                deleteButton.classList.add('delete-button');
+                deleteButton.addEventListener('click', () => deleteTask(task.id));
+                actionsDiv.appendChild(deleteButton);
+
+                li.appendChild(actionsDiv);
+
+                taskList.appendChild(li);
+            });
+
+            updateCounters();
+        }
+
+        // Toggle Task Completion
+        function toggleComplete(id) {
+            tasks = tasks.map(task => {
+                if (task.id === id) {
+                    return {...task, completed: !task.completed};
+                }
+                return task;
+            });
+            saveTasks();
+            renderTasks();
+        }
+
+        // Edit Task
+        function editTask(id) {
+            const task = tasks.find(t => t.id === id);
+            const newText = prompt('Edit your task:', task.text);
+            if (newText !== null) {
+                if (newText.trim() === '') {
+                    alert('Task cannot be empty.');
+                    return;
+                }
+                task.text = newText.trim();
+                saveTasks();
+                renderTasks();
+            }
+        }
+
+        // Delete Task
+        function deleteTask(id) {
+            if (confirm('Are you sure you want to delete this task?')) {
+                tasks = tasks.filter(task => task.id !== id);
+                saveTasks();
+                renderTasks();
+            }
+        }
+
+        // Filter Buttons Events
+        filterAll.addEventListener('click', () => setFilter('all'));
+        filterActive.addEventListener('click', () => setFilter('active'));
+        filterCompleted.addEventListener('click', () => setFilter('completed'));
+
+        // Set Current Filter and Update UI
+        function setFilter(filter) {
+            currentFilter = filter;
+            // Update active button
+            document.querySelectorAll('.filters button').forEach(btn => btn.classList.remove('active'));
+            if (filter === 'all') {
+                filterAll.classList.add('active');
+            } else if (filter === 'active') {
+                filterActive.classList.add('active');
+            } else if (filter === 'completed') {
+                filterCompleted.classList.add('active');
+            }
+            renderTasks();
+        }
+
+        // Update Counters
+        function updateCounters() {
+            const activeCount = tasks.filter(task => !task.completed).length;
+            const completedCount = tasks.filter(task => task.completed).length;
+            activeCountSpan.textContent = `${activeCount} active`;
+            completedCountSpan.textContent = `${completedCount} completed`;
+        }
+
+        // Clear All Completed Tasks
+        clearCompletedButton.addEventListener('click', clearCompleted);
+
+        function clearCompleted() {
+            if (confirm('Are you sure you want to clear all completed tasks?')) {
+                tasks = tasks.filter(task => !task.completed);
+                saveTasks();
+                renderTasks();
+            }
+        }
+    </script>
+</body>
+</html>
